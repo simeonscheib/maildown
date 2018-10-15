@@ -24,6 +24,79 @@ import helper
 app = QApplication([])
 
 
+# Set data for mailing-list and placeholders
+class recipientsWindow(QWidget):
+    ready = pyqtSignal()
+
+    layout_top = QVBoxLayout()
+
+    layout_top_h = QHBoxLayout()
+
+    save_close = QPushButton()
+
+    placeholders = QLineEdit()
+
+    table = QTableWidget()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.table.setRowCount(10)
+        self.table.setColumnCount(1)
+
+        self.table.setHorizontalHeaderLabels(["EMail"])
+
+        self.placeholders.setPlaceholderText("Placeholder1, Placeholder2, ...")
+        self.layout_top_h.addWidget(self.placeholders)
+
+        self.save_close.setText("Save && Close")
+        self.layout_top_h.addWidget(self.save_close)
+        self.layout_top.addLayout(self.layout_top_h)
+        self.layout_top.addWidget(self.table)
+
+        self.setLayout(self.layout_top)
+
+
+        self.placeholders.textChanged.connect(self.set_labels)
+
+        self.save_close.pressed.connect(self.save_close_)
+    def set_labels(self, text):
+
+        labels = text.split(", ")
+        self.table.setColumnCount(len(labels) + 1)
+        self.table.setHorizontalHeaderLabels(["EMail"] + labels)
+
+    def save_close_(self):
+        self.ready.emit()
+
+
+    def get_recipients(self):
+
+        email_dict = {}
+        email = ""
+
+
+        for row in range(self.table.rowCount()):
+            for col in range(self.table.columnCount()):
+                item = self.table.item(row, col)
+
+                if col == 0:
+                    if item == None:
+                        break
+                    else:
+                        i_text = item.text()
+                        email = i_text
+                        email_dict[i_text] = {}
+                        continue
+
+                if item == None:
+                    continue
+
+                email_dict[email][self.table.horizontalHeaderItem(col).text()] = item.text()
+
+
+        return email_dict
+
 
 class MDMailer_(QObject, mail.MDMailer):
 
@@ -77,6 +150,9 @@ class MWindow(QWidget):
     # Recipient Mail
     to_edit = QLineEdit()
 
+    # Open recipientsWindow
+    multi_rec_btn = QPushButton()
+
     # Send EMail
     send_btn = QPushButton()
 
@@ -91,6 +167,9 @@ class MWindow(QWidget):
 
     # MDMailer Class handles everything except graphics
     mdm = None
+
+    # recipientsWindow
+    recWin = recipientsWindow()
 
     Mail_Thread = QThread()
     config = helper.config()
@@ -108,6 +187,9 @@ class MWindow(QWidget):
         self.layout_r.addLayout(self.layout_r_h)
         self.layout_r_h.addWidget(self.to_edit)
         self.to_edit.setPlaceholderText("To:")
+
+        self.layout_r_h.addWidget(self.multi_rec_btn)
+        self.multi_rec_btn.setText("...")
 
         self.layout_r_h.addWidget(self.send_btn)
         self.send_btn.setText("Send")
@@ -146,7 +228,8 @@ class MWindow(QWidget):
         self.mdm.finished_sending.connect(self.reenable_send)
         self.mdm.progress2.connect(self.progress_bar.setMaximum)
         self.mdm.progress1.connect(self.progress_bar.setValue)
-
+        self.multi_rec_btn.pressed.connect(self.open_recipientsWindow)
+        self.recWin.ready.connect(self.get_recipients)
 
         del_att_short = QShortcut(QKeySequence(Qt.Key_Delete), self.attachments)
         del_att_short.activated.connect(self.del_att)
@@ -226,16 +309,16 @@ class MWindow(QWidget):
         self.mdm.mail_text = self.mdtext.toPlainText()
         self.mdm.subject = self.subject_edit.text()
         to = self.to_edit.text()
-        #rec = {to, []}
-        rec = {}
-        for i in to.split(", "):
-            rec[i] = {"Name" : i}
+
+        if to != "":
+            rec = [to]
+            self.mdm.rec = rec
 
         files = []
         for i in range(self.attachments.count()):
             files.append(str(self.attachments.item(i).data(3)))
 
-        self.mdm.rec = rec
+
         self.mdm.files = files
 
         #self.mdm.send_mail(mail_text, subject, rec, files=files)
@@ -257,6 +340,13 @@ class MWindow(QWidget):
         for item in self.attachments.selectedItems():
             tmp = self.attachments.takeItem(self.attachments.row(item))
             del tmp
+
+    def open_recipientsWindow(self):
+        self.recWin.show()
+
+    def get_recipients(self):
+        self.mdm.rec = self.recWin.get_recipients()
+        self.recWin.close()
 
     @pyqtSlot()
     def reenable_send(self):
