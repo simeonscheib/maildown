@@ -18,6 +18,7 @@ from PyQt5.QtWebKitWidgets import QWebView
 from PyQt5.QtGui import QKeySequence
 from PyQt5.Qt import QAbstractItemView
 import os
+import helper
 
 
 app = QApplication([])
@@ -90,14 +91,8 @@ class MWindow(QWidget):
     # MDMailer Class handles everything except graphics
     mdm = None
 
-    # Config here
-    my_email = ""
-    my_smtp = ''
-    my_smtp_port = 587
-    my_username = ""
-    my_password = ""
-
     Mail_Thread = QThread()
+    config = helper.config()
 
     send_signal = pyqtSignal()
 
@@ -131,7 +126,11 @@ class MWindow(QWidget):
         self.setLayout(self.layout_top)
 
         # construct MDMailer with server Info
-        self.mdm = MDMailer_(self.my_email, self.my_smtp, self.my_smtp_port, self.my_username, self.my_password)
+        self.mdm = MDMailer_(self.config.get_email(),
+                             self.config.get_smtp(),
+                             self.config.get_port(),
+                             self.config.get_username(),
+                             self.config.get_password())
 
         # other
 
