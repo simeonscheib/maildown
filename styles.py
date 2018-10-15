@@ -71,3 +71,60 @@ codehilite_css = '''
 .codehilite .vm { color: #19177C } /* Name.Variable.Magic */
 .codehilite .il { color: #666666 } /* Literal.Number.Integer.Long */
 '''
+
+admonition = '''
+.attention {background-color: #f0f7fb;
+     border: solid 1px #3498db;
+     border-radius: 6px;
+     line-height: 18px;
+     overflow: hidden;
+     padding: 11px;} 
+.caution {background-color: #ffdddd;
+     border: solid 1px #f44336;
+     border-radius: 6px;
+     line-height: 18px;
+     overflow: hidden;
+     padding: 11px;}
+.danger {background-color: #ffdddd;
+     border: solid 1px #f44336;
+     border-radius: 6px;
+     line-height: 18px;
+     overflow: hidden;
+     padding: 11px;}
+.error {background-color: #ffdddd;
+     border: solid 1px #f44336;
+     border-radius: 6px;
+     line-height: 18px;
+     overflow: hidden;
+     padding: 11px;}
+.hint {background-color: #ddffdd;
+     border: solid 1px #4CAF50;
+     border-radius: 6px;
+     line-height: 18px;
+     overflow: hidden;
+     padding: 11px;}
+.important {background-color: #f0f7fb;
+     border: solid 1px #3498db;
+     border-radius: 6px;
+     line-height: 18px;
+     overflow: hidden;
+     padding: 11px;}
+.note {background-color: #f0f7fb;
+     border: solid 1px #3498db;
+     border-radius: 6px;
+     line-height: 18px;
+     overflow: hidden;
+     padding: 11px;}
+.tip {background-color: #ddffdd;
+     border: solid 1px #4CAF50;
+     border-radius: 6px;
+     line-height: 18px;
+     overflow: hidden;
+     padding: 11px;}
+.warning {background-color: #ffffcc;
+     border: solid 1px #ffeb3b;
+     border-radius: 6px;
+     line-height: 18px;
+     overflow: hidden;
+     padding: 11px;}
+'''

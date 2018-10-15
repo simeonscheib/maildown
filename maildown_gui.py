@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (QApplication,
         QTableWidget,
         QProgressBar
         )
-from PyQt5.QtWebKitWidgets import QWebView
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QKeySequence
 from PyQt5.Qt import QAbstractItemView
 import os
@@ -22,6 +22,7 @@ import helper
 
 
 app = QApplication([])
+
 
 
 class MDMailer_(QObject, mail.MDMailer):
@@ -68,7 +69,7 @@ class MWindow(QWidget):
     mdtext = QPlainTextEdit()
 
     # shows html
-    html_view = QWebView()
+    html_view = QWebEngineView()
 
     # Mail Subject
     subject_edit = QLineEdit()
@@ -114,6 +115,7 @@ class MWindow(QWidget):
         self.layout_r_h.addWidget(self.add_att_btn)
         self.add_att_btn.setText("Attach..")
 
+        self.attachments.setMaximumHeight(100)
         self.layout_r.addWidget(self.html_view)
 
         self.progress_bar.setTextVisible(False)
@@ -263,6 +265,5 @@ class MWindow(QWidget):
 # here we go ...
 window = MWindow()
 window.show()
-
 
 app.exec_()

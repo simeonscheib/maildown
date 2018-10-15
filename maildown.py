@@ -72,20 +72,19 @@ class MDMailer:
     def get_html(self, text_md, subject):
 
         default_html_start = '<!doctype HTML><html><head><meta charset="utf-8"><title>' + subject + '</title>'
-        default_html_start += "<style type='text/css'>" + self.style + styles.codehilite_css + "</style>"
+        default_html_start += "<style type='text/css'>" + self.style + styles.codehilite_css + styles.admonition + "</style>"
         default_html_start += "</head><body>"
         default_html_end = '</body></html>'
 
-        default_extensions = ['markdown.extensions.extra','markdown.extensions.toc', 'markdown.extensions.smarty', 'markdown.extensions.nl2br', 'markdown.extensions.urlize', 'markdown.extensions.Highlighting', 'markdown.extensions.Strikethrough', 'markdown.extensions.markdown_checklist', 'markdown.extensions.superscript', 'markdown.extensions.subscript', 'markdown.extensions.mathjax', 'markdown.extensions.codehilite']
+        default_extensions = ['markdown.extensions.extra', 'markdown.extensions.toc', 'markdown.extensions.smarty', 'markdown.extensions.nl2br', 'markdown.extensions.urlize', 'markdown.extensions.Highlighting', 'markdown.extensions.Strikethrough', 'markdown.extensions.markdown_checklist', 'markdown.extensions.superscript', 'markdown.extensions.subscript', 'markdown.extensions.codehilite', 'markdown.extensions.def_list', 'markdown.extensions.admonition']
         safe_extensions = ['markdown.extensions.extra', 'markdown.extensions.nl2br']
 
         # convert ...
         try:
             html_body = markdown.markdown(text_md, default_extensions)
         except:
-            print("here")
             try:
-                html_body = markdown.markdown(text_md, extensions =safe_extensions)
+                html_body = markdown.markdown(text_md, extensions=safe_extensions)
             except:
                 html_body = markdown.markdown(text_md)
 

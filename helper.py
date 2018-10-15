@@ -11,6 +11,7 @@ class config():
     def __init__(self):
 
         self.con = configparser.ConfigParser()
+
         if (os.path.exists(self.config_dir)):
 
             self.con.read(self.config_dir)
