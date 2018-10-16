@@ -40,10 +40,12 @@ class recipientsWindow(QWidget):
 
     table = QTableWidget()
 
+    row_cnt = 2
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.table.setRowCount(10)
+        self.table.setRowCount(self.row_cnt)
         self.table.setColumnCount(1)
 
         self.table.setHorizontalHeaderLabels(["EMail"])
@@ -60,6 +62,7 @@ class recipientsWindow(QWidget):
 
 
         self.placeholders.textChanged.connect(self.set_labels)
+        self.table.cellChanged.connect(self.adapt_size)
 
         self.save_close.pressed.connect(self.save_close_)
     def set_labels(self, text):
@@ -98,6 +101,11 @@ class recipientsWindow(QWidget):
 
 
         return email_dict
+
+    def adapt_size(self, r, c):
+        if (c == 0 and r > self.row_cnt - 3):
+            self.row_cnt = r + 3
+            self.table.setRowCount(self.row_cnt)
 
 
 class MDMailer_(QObject, mail.MDMailer):
