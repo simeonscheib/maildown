@@ -1,3 +1,5 @@
+#coding: utf-8
+
 import maildown as mail
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import (QApplication,
