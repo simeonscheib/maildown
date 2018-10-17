@@ -16,14 +16,15 @@ from PyQt5.QtWidgets import (QApplication,
         QTableWidget,
         QProgressBar
         )
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+
 from PyQt5.QtGui import QKeySequence
-from PyQt5.Qt import QAbstractItemView
+from PyQt5.Qt import QAbstractItemView, QWebView
 import os
 import helper
+import sys
 
-
-app = QApplication([])
+sys.argv.append("--disable-web-security")
+app = QApplication(sys.argv)
 
 
 # Set data for mailing-list and placeholders
@@ -152,7 +153,8 @@ class MWindow(QWidget):
     mdtext = QPlainTextEdit()
 
     # shows html
-    html_view = QWebEngineView()
+    html_view = QWebView()
+
 
     # Mail Subject
     subject_edit = QLineEdit()
@@ -309,10 +311,10 @@ class MWindow(QWidget):
 
     # Show html from plain text
     def compile(self):
-        self.html_view.setHtml(
-            self.mdm.get_html(self.mdtext.toPlainText(),
-            self.subject_edit.text())
-            )
+
+        html_c = self.mdm.get_html(self.mdtext.toPlainText(), self.subject_edit.text())
+
+        self.html_view.setHtml(html_c)
 
     # Send Mail
     def send(self):
