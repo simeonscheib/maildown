@@ -23,8 +23,7 @@ import os
 import helper
 import sys
 
-sys.argv.append("--disable-web-security")
-app = QApplication(sys.argv)
+app = QApplication([])
 
 
 # Set data for mailing-list and placeholders
