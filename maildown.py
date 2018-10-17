@@ -1,3 +1,5 @@
+#coding: utf-8
+
 import smtplib
 import os
 from email.mime.multipart import MIMEMultipart
@@ -81,7 +83,7 @@ class MDMailer:
 
         # convert ...
         try:
-            html_body = markdown.markdown(text_md, default_extensions)
+            html_body = markdown.markdown(text_md, extensions=default_extensions)
         except:
             try:
                 html_body = markdown.markdown(text_md, extensions=safe_extensions)
