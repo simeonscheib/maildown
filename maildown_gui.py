@@ -4,41 +4,25 @@ import maildown as mail
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import (QApplication,
         QWidget,
-        QPushButton,
-        QHBoxLayout,
-        QVBoxLayout,
-        QLineEdit,
-        QPlainTextEdit,
-        QListWidget,
         QFileDialog,
         QListWidgetItem,
-        QShortcut,
-        QTableWidget,
-        QProgressBar
+        QShortcut
         )
 
 from PyQt5.QtGui import QKeySequence
-from PyQt5.Qt import QAbstractItemView, QWebView
 import os
 import helper
-import sys
+
 
 app = QApplication([])
+from ui_mwindow import Ui_MWindow
+from ui_recipientswindow import Ui_recipientsWindow
 
 
 # Set data for mailing-list and placeholders
-class recipientsWindow(QWidget):
+class recipientsWindow(QWidget, Ui_recipientsWindow):
     ready = pyqtSignal()
 
-    layout_top = QVBoxLayout()
-
-    layout_top_h = QHBoxLayout()
-
-    save_close = QPushButton()
-
-    placeholders = QLineEdit()
-
-    table = QTableWidget()
 
     row_cnt = 2
 
@@ -49,17 +33,6 @@ class recipientsWindow(QWidget):
         self.table.setColumnCount(1)
 
         self.table.setHorizontalHeaderLabels(["EMail"])
-
-        self.placeholders.setPlaceholderText("Placeholder1, Placeholder2, ...")
-        self.layout_top_h.addWidget(self.placeholders)
-
-        self.save_close.setText("Save && Close")
-        self.layout_top_h.addWidget(self.save_close)
-        self.layout_top.addLayout(self.layout_top_h)
-        self.layout_top.addWidget(self.table)
-
-        self.setLayout(self.layout_top)
-
 
         self.placeholders.textChanged.connect(self.set_labels)
         self.table.cellChanged.connect(self.adapt_size)
@@ -136,45 +109,9 @@ class MDMailer_(QObject, mail.MDMailer):
         self.progress2.emit(recipients_number)
         self.progress1.emit(done)
 
-class MWindow(QWidget):
 
-    # Two column Layout
-    layout_top = QHBoxLayout()
+class MWindow(QWidget, Ui_MWindow):
 
-    # Vertical layout for each column
-    layout_l = QVBoxLayout()
-    layout_r = QVBoxLayout()
-
-    # Horizontal layout for controls
-    layout_r_h = QHBoxLayout()
-
-    # Edit raw markdown
-    mdtext = QPlainTextEdit()
-
-    # shows html
-    html_view = QWebView()
-
-
-    # Mail Subject
-    subject_edit = QLineEdit()
-
-    # Recipient Mail
-    to_edit = QLineEdit()
-
-    # Open recipientsWindow
-    multi_rec_btn = QPushButton()
-
-    # Send EMail
-    send_btn = QPushButton()
-
-    # Add attachment
-    add_att_btn = QPushButton()
-
-    # QProgressBar
-    progress_bar = QProgressBar()
-
-    # attachment QListWidget
-    attachments = QListWidget()
 
     # MDMailer Class handles everything except graphics
     mdm = None
@@ -190,35 +127,6 @@ class MWindow(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # build layout
-        self.layout_l.addWidget(self.subject_edit)
-        self.subject_edit.setPlaceholderText("Subject")
-        self.layout_l.addWidget(self.mdtext)
-
-        self.layout_r.addLayout(self.layout_r_h)
-        self.layout_r_h.addWidget(self.to_edit)
-        self.to_edit.setPlaceholderText("To:")
-
-        self.layout_r_h.addWidget(self.multi_rec_btn)
-        self.multi_rec_btn.setText("...")
-
-        self.layout_r_h.addWidget(self.send_btn)
-        self.send_btn.setText("Send")
-
-        self.layout_r_h.addWidget(self.add_att_btn)
-        self.add_att_btn.setText("Attach..")
-
-        self.attachments.setMaximumHeight(100)
-        self.layout_r.addWidget(self.html_view)
-
-        self.progress_bar.setTextVisible(False)
-        self.progress_bar.setFixedHeight(10)
-        self.progress_bar.setValue(1)
-        self.layout_r.addWidget(self.progress_bar)
-        self.layout_r.addWidget(self.attachments)
-        self.layout_top.addLayout(self.layout_l)
-        self.layout_top.addLayout(self.layout_r)
-        self.setLayout(self.layout_top)
 
         # construct MDMailer with server Info
         self.mdm = MDMailer_(self.config.get_email(),
@@ -227,9 +135,6 @@ class MWindow(QWidget):
                              self.config.get_username(),
                              self.config.get_password())
 
-        # other
-
-        self.attachments.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
         # Connect Stuff here ...
         self.mdtext.textChanged.connect(self.compile)

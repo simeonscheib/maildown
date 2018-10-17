@@ -1,0 +1,32 @@
+#coding: utf-8
+
+from PyQt5.QtWidgets import (
+        QPushButton,
+        QHBoxLayout,
+        QVBoxLayout,
+        QLineEdit,
+        QTableWidget
+        )
+
+class Ui_recipientsWindow():
+    layout_top = QVBoxLayout()
+
+    layout_top_h = QHBoxLayout()
+
+    save_close = QPushButton()
+
+    placeholders = QLineEdit()
+
+    table = QTableWidget()
+
+    def __init__(self):
+        self.placeholders.setPlaceholderText("Placeholder1, Placeholder2, ...")
+        self.layout_top_h.addWidget(self.placeholders)
+
+        self.save_close.setText("Save && Close")
+        self.layout_top_h.addWidget(self.save_close)
+        self.layout_top.addLayout(self.layout_top_h)
+        self.layout_top.addWidget(self.table)
+
+        self.setLayout(self.layout_top)
+
