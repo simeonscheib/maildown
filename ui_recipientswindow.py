@@ -13,6 +13,10 @@ class Ui_recipientsWindow():
 
     layout_top_h = QHBoxLayout()
 
+    load_csv = QPushButton()
+
+    save_csv = QPushButton()
+
     save_close = QPushButton()
 
     placeholders = QLineEdit()
@@ -22,6 +26,12 @@ class Ui_recipientsWindow():
     def __init__(self):
         self.placeholders.setPlaceholderText("Placeholder1, Placeholder2, ...")
         self.layout_top_h.addWidget(self.placeholders)
+
+        self.load_csv.setText("Load CSV")
+        self.layout_top_h.addWidget(self.load_csv)
+
+        self.save_csv.setText("Save CSV")
+        self.layout_top_h.addWidget(self.save_csv)
 
         self.save_close.setText("Save && Close")
         self.layout_top_h.addWidget(self.save_close)

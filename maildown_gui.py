@@ -6,12 +6,15 @@ from PyQt5.QtWidgets import (QApplication,
         QWidget,
         QFileDialog,
         QListWidgetItem,
-        QShortcut
+        QShortcut,
+        QMessageBox,
+        QTableWidgetItem
         )
 
 from PyQt5.QtGui import QKeySequence
 import os
 import helper
+import csv
 
 
 app = QApplication([])
@@ -38,6 +41,9 @@ class recipientsWindow(QWidget, Ui_recipientsWindow):
         self.table.cellChanged.connect(self.adapt_size)
 
         self.save_close.pressed.connect(self.save_close_)
+        self.save_csv.pressed.connect(self.save_csv_)
+        self.load_csv.pressed.connect(self.load_csv_)
+
     def set_labels(self, text):
 
         labels = text.split(", ")
@@ -75,10 +81,115 @@ class recipientsWindow(QWidget, Ui_recipientsWindow):
 
         return email_dict
 
+
+
     def adapt_size(self, r, c):
         if (c == 0 and r > self.row_cnt - 3):
             self.row_cnt = r + 3
             self.table.setRowCount(self.row_cnt)
+
+
+    def save_csv_(self):
+
+        filename, t = QFileDialog.getSaveFileName(self, "Save to CSV", "maillist.csv", "CSV File (*.csv)")
+
+        if filename == "":
+            return
+
+        if t == "CSV File (*.csv)":
+
+            self.dump_to_csv(filename)
+
+    def load_csv_(self):
+
+        filename, t = QFileDialog.getOpenFileName(self, "Load CSV", filter="CSV File (*.csv)")
+
+        if filename == "":
+            return
+
+        if t == "CSV File (*.csv)":
+
+            empty = True
+
+            for row in range(self.table.rowCount()):
+                for col in range(self.table.columnCount()):
+
+                    item = self.table.item(row, col)
+
+                    if (item != None):
+                        empty = False
+                        break
+
+                if not empty:
+                    break
+
+            if not empty:
+                msg_box = QMessageBox()
+                msg_box.setIcon(QMessageBox.Question)
+                msg_box.setWindowTitle("Overwrite?")
+                msg_box.setText("Table is not empty")
+                msg_box.setInformativeText("Do you want to overwrite it?")
+                msg_box.addButton(QMessageBox.Yes)
+                msg_box.addButton(QMessageBox.Cancel)
+                msg_box.setDefaultButton(QMessageBox.Cancel)
+
+                answer = msg_box.exec()
+
+                if answer == QMessageBox.Cancel:
+                    return
+
+            self.load_from_csv(filename)
+
+    def dump_to_csv(self, filename):
+
+        headers = []
+
+        for col in range(self.table.columnCount()):
+            headers.append(self.table.horizontalHeaderItem(col).text())
+
+
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=' ',
+                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+
+            writer.writerow(headers)
+
+            for row in range(self.table.rowCount()):
+
+                row_items = []
+
+                for col in range(self.table.columnCount()):
+
+                    item = self.table.item(row, col)
+
+                    if item == None:
+                        text = ""
+                    else:
+                        text = item.text()
+
+                    row_items.append(text)
+
+                if row_items.count("") == len(row_items):
+                    continue
+
+                writer.writerow(row_items)
+
+    def load_from_csv(self, filename):
+
+        with open(filename, newline='') as csvfile:
+
+            reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
+
+            firstline = next(reader)
+
+            #self.table.setColumnCount(len(firstline))
+            #self.table.setHorizontalHeaderLabels(firstline)
+
+            self.placeholders.setText(", ".join(firstline[1:]))
+
+            for i, row in enumerate(reader):
+                for j, text in enumerate(row):
+                    self.table.setItem(i, j, QTableWidgetItem(text))
 
 
 class MDMailer_(QObject, mail.MDMailer):
@@ -104,6 +215,7 @@ class MDMailer_(QObject, mail.MDMailer):
         print("sending")
         self.send_mail(self.mail_text, self.subject, self.rec, files=self.files)
         print("finished")
+        self.finished_sending.emit()
 
     def progress(self, done, recipients_number):
         self.progress2.emit(recipients_number)
