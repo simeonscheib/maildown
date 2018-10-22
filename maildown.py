@@ -181,7 +181,7 @@ class MDMailer:
 
             msg_str = msg.as_string()
 
-            self.server.sendmail(self.mymail, to_mail, msg_str)
+            self.server.sendmail(self.mymail, to_mail.split(", "), msg_str)
             done += 1
             self.progress(done, recipients_number)
 

@@ -5,13 +5,16 @@ from PyQt5.QtWidgets import (
         QHBoxLayout,
         QVBoxLayout,
         QLineEdit,
-        QTableWidget
+        QTableWidget,
+        QCheckBox
         )
 
 class Ui_recipientsWindow():
     layout_top = QVBoxLayout()
 
     layout_top_h = QHBoxLayout()
+
+    one_mail = QCheckBox()
 
     load_csv = QPushButton()
 
@@ -26,6 +29,9 @@ class Ui_recipientsWindow():
     def __init__(self):
         self.placeholders.setPlaceholderText("Placeholder1, Placeholder2, ...")
         self.layout_top_h.addWidget(self.placeholders)
+
+        self.one_mail.setText("Send one mail to all recipients")
+        self.layout_top_h.addWidget(self.one_mail)
 
         self.load_csv.setText("Load CSV")
         self.layout_top_h.addWidget(self.load_csv)
