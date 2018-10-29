@@ -359,7 +359,20 @@ class MWindow(QWidget, Ui_MWindow):
 
         html_c = self.mdm.get_html(self.mdtext.toPlainText(), self.subject_edit.text())
 
+        scroll = self.html_view.page().mainFrame().scrollPosition()
+
+        max_y = self.html_view.page().mainFrame().scrollBarMaximum(2)
+
+        end = False
+        if scroll.y() == max_y:
+            end = True
+
         self.html_view.setHtml(html_c)
+
+        if end:
+            scroll.setY(self.html_view.page().mainFrame().scrollBarMaximum(2))
+
+        self.html_view.page().mainFrame().setScrollPosition(scroll)
 
     # Send Mail
     def send(self):
