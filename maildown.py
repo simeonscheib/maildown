@@ -50,8 +50,9 @@ class MDMailer:
                 self.server.ehlo()
                 self.server.login(self.username, self.password)
                 self.connected = True
-            except:
-                print("Could not connect to server")
+                self.server.close()
+            except Exception as e:
+                print(e)
                 return
 
 
@@ -61,6 +62,18 @@ class MDMailer:
         if self.connected:
             self.server.quit()
     '''
+
+    def connect(self):
+        try:
+            self.server = smtplib.SMTP(self.smtpserver, self.port)
+            self.server.ehlo()
+            self.server.starttls()
+            self.server.ehlo()
+            self.server.login(self.username, self.password)
+            return True
+        except Exception as e:
+            print(e)
+            return False
 
     # get text from markdown file
     def get_text(self, filename):
@@ -134,6 +147,9 @@ class MDMailer:
                     )
             MIMEApplication_list[-1]['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(f)
 
+        if not self.connect():
+            return
+
         recipients_number = len(recipients)
         done = 0
         # iterate recipients
@@ -181,9 +197,11 @@ class MDMailer:
 
             msg_str = msg.as_string()
 
-            self.server.sendmail(self.mymail, to_mail, msg_str)
+            self.server.sendmail(self.mymail, to_mail.split(", "), msg_str)
             done += 1
             self.progress(done, recipients_number)
+
+        self.server.close()
 
     # send .md file
     def send_md_file(self, filename, subject, recipients, files=None):
