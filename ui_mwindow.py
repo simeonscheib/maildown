@@ -12,6 +12,8 @@ from PyQt5.QtWidgets import (
 
 from PyQt5.Qt import QAbstractItemView, QWebView
 
+from MdTextEdit import QPlainMdTextEdit
+
 class Ui_MWindow():
     # Two column Layout
     layout_top = QHBoxLayout()
@@ -24,7 +26,7 @@ class Ui_MWindow():
     layout_r_h = QHBoxLayout()
 
     # Edit raw markdown
-    mdtext = QPlainTextEdit()
+    mdtext = QPlainMdTextEdit()
 
     # shows html
     html_view = QWebView()

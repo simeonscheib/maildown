@@ -265,6 +265,7 @@ class MWindow(QWidget, Ui_MWindow):
 
     send_signal = pyqtSignal()
 
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -275,6 +276,8 @@ class MWindow(QWidget, Ui_MWindow):
                              self.config.get_port(),
                              self.config.get_username(),
                              self.config.get_password())
+
+
 
 
         # Connect Stuff here ...
@@ -357,7 +360,13 @@ class MWindow(QWidget, Ui_MWindow):
     # Show html from plain text
     def compile(self):
 
-        html_c = self.mdm.get_html(self.mdtext.toPlainText(), self.subject_edit.text())
+        cursor = self.mdtext.textCursor()
+        cursor.movePosition(9, 1)
+
+
+        md_text_plain = self.mdtext.toPlainText()
+
+        html_c = self.mdm.get_html(md_text_plain, self.subject_edit.text())
 
         scroll = self.html_view.page().mainFrame().scrollPosition()
 
