@@ -405,7 +405,7 @@ class MWindow(QWidget, Ui_MWindow):
 
     # Send Mail
     def send(self):
-        self.mdm.mail_text = self.mdtext.toPlainText()
+        self.mdm.mail_text = self.show_code_inline(self.mdtext.toPlainText())
         self.mdm.subject = self.subject_edit.text()
         to = self.to_edit.text()
 
@@ -423,6 +423,10 @@ class MWindow(QWidget, Ui_MWindow):
         for i in range(self.attachments.count()):
             files.append(str(self.attachments.item(i).data(3)))
 
+        for i in re.findall(r"<att>?\(([^\)]*)\)", self.mdm.mail_text):
+            files.append(str(i))
+
+        re.sub(r"<att>?\(([^\)]*)\)", "", self.mdm.mail_text)
 
         self.mdm.files = files
 
@@ -485,6 +489,7 @@ class MWindow(QWidget, Ui_MWindow):
 
 
         return text
+
 
 
 # here we go ...

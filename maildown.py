@@ -9,6 +9,7 @@ from email.mime.application import MIMEApplication
 import markdown
 import styles
 from bs4 import BeautifulSoup
+import re
 
 import html2text
 
@@ -140,7 +141,15 @@ class MDMailer:
 
         # make MIMEApplication for every attachment
         MIMEApplication_list = []
+
+        individual_att_list = []
         for f in files or []:
+
+            replace = re.search(r"§§(\w+)§§", f)[1]
+
+            if replace:
+                individual_att_list.append((replace, f))
+                continue
             with open(f, "rb") as fil:
                 MIMEApplication_list.append(
                     MIMEApplication(fil.read(), Name=os.path.basename(f))
@@ -192,6 +201,13 @@ class MDMailer:
             alternative_mmp.attach(related_mmp)
             msg.attach(alternative_mmp)
 
+            for i, f in individual_att_list:
+                f2 = f.replace("§§" + str(i) + "§§", recipients[to_mail][i])
+                with open(f2, "rb") as file:
+                    mappl = MIMEApplication(file.read(), Name=os.path.basename(f2))
+                mappl['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(f2)
+                msg.attach(mappl)
+
             for part in MIMEApplication_list:
                 msg.attach(part)
 
@@ -242,6 +258,7 @@ class MDMailer:
             print("Unknown Type" + type(content))
 
         return plain_text2, html_message2
+
 
     def progress(self, done, recipients_number):
         print("Sent to " + done + " of " + recipients_number )
