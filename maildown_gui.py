@@ -8,15 +8,18 @@ from PyQt5.QtWidgets import (QApplication,
         QListWidgetItem,
         QShortcut,
         QMessageBox,
-        QTableWidgetItem
+        QTableWidgetItem,
+        QAction
         )
 
 from PyQt5.QtGui import QKeySequence
 import os
 import helper
 import csv
+import re
+import pdfkit
 
-
+# App
 app = QApplication([])
 from ui_mwindow import Ui_MWindow
 from ui_recipientswindow import Ui_recipientsWindow
@@ -24,40 +27,52 @@ from ui_recipientswindow import Ui_recipientsWindow
 
 # Set data for mailing-list and placeholders
 class recipientsWindow(QWidget, Ui_recipientsWindow):
+
+    # Work finished
     ready = pyqtSignal()
 
-
+    # initial row count
     row_cnt = 2
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        # set row and column count
         self.table.setRowCount(self.row_cnt)
         self.table.setColumnCount(1)
 
+        # set all checked
         for row in range(self.table.rowCount()):
             self.table.setItem(row, 0, QTableWidgetItem())
             self.table.item(row, 0).setCheckState(Qt.Checked)
 
+        # First col is E-Mail
         self.table.setHorizontalHeaderLabels(["EMail"])
 
+        # connect Text change to label change
         self.placeholders.textChanged.connect(self.set_labels)
+
+        # dynamically adapt size
         self.table.currentCellChanged.connect(self.adapt_size)
 
+        # connect buttons
         self.save_close.pressed.connect(self.save_close_)
         self.save_csv.pressed.connect(self.save_csv_)
         self.load_csv.pressed.connect(self.load_csv_)
 
+    # text to labels
     def set_labels(self, text):
 
         labels = text.split(", ")
         self.table.setColumnCount(len(labels) + 1)
         self.table.setHorizontalHeaderLabels(["EMail"] + labels)
 
+    # close window
     def save_close_(self):
         self.ready.emit()
 
 
+    # table to recipients dict
     def get_recipients(self):
 
         if self.one_mail.isChecked():
@@ -89,6 +104,7 @@ class recipientsWindow(QWidget, Ui_recipientsWindow):
         return email_dict
 
 
+    # concatenate all recipients in one string
     def get_recipients_str(self):
 
         rec_list = []
@@ -103,6 +119,7 @@ class recipientsWindow(QWidget, Ui_recipientsWindow):
 
         return ", ".join(rec_list)
 
+    # increase table size dynamically
     def adapt_size(self, r, c):
         if (c == 0 and r > self.row_cnt - 2):
             self.table.setRowCount(self.row_cnt + 1)
@@ -111,6 +128,7 @@ class recipientsWindow(QWidget, Ui_recipientsWindow):
             self.row_cnt = r + 2
 
 
+    # save table in csv
     def save_csv_(self):
 
         filename, t = QFileDialog.getSaveFileName(self, "Save to CSV", "maillist.csv", "CSV File (*.csv)")
@@ -122,6 +140,7 @@ class recipientsWindow(QWidget, Ui_recipientsWindow):
 
             self.dump_to_csv(filename)
 
+    # load csv to table
     def load_csv_(self):
 
         filename, t = QFileDialog.getOpenFileName(self, "Load CSV", filter="CSV File (*.csv)")
@@ -131,6 +150,7 @@ class recipientsWindow(QWidget, Ui_recipientsWindow):
 
         if t == "CSV File (*.csv)":
 
+            # check if table is empty
             empty = True
 
             for row in range(self.table.rowCount()):
@@ -265,6 +285,8 @@ class MWindow(QWidget, Ui_MWindow):
 
     send_signal = pyqtSignal()
 
+    export_pdf_act = None
+
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -281,7 +303,7 @@ class MWindow(QWidget, Ui_MWindow):
 
 
         # Connect Stuff here ...
-        self.mdtext.textChanged.connect(self.compile)
+        self.mdtext.textedit.textChanged.connect(self.compile)
         self.send_btn.pressed.connect(self.send)
         self.add_att_btn.pressed.connect(self.add_att)
         self.send_signal.connect(self.mdm.send)
@@ -293,6 +315,10 @@ class MWindow(QWidget, Ui_MWindow):
 
         del_att_short = QShortcut(QKeySequence(Qt.Key_Delete), self.attachments)
         del_att_short.activated.connect(self.del_att)
+
+        self.export_pdf_act = QShortcut(QKeySequence("Ctrl+E"), self)
+
+        self.export_pdf_act.activated.connect(self.export_pdf)
 
         self.stylesheet = """
         .QPushButton {
@@ -360,11 +386,13 @@ class MWindow(QWidget, Ui_MWindow):
     # Show html from plain text
     def compile(self):
 
-        cursor = self.mdtext.textCursor()
+        cursor = self.mdtext.textedit.textCursor()
         cursor.movePosition(9, 1)
 
 
-        md_text_plain = self.mdtext.toPlainText()
+        md_text_plain = self.mdtext.textedit.toPlainText()
+
+        md_text_plain = self.show_code_inline(md_text_plain)
 
         html_c = self.mdm.get_html(md_text_plain, self.subject_edit.text())
 
@@ -385,7 +413,7 @@ class MWindow(QWidget, Ui_MWindow):
 
     # Send Mail
     def send(self):
-        self.mdm.mail_text = self.mdtext.toPlainText()
+        self.mdm.mail_text = self.show_code_inline(self.mdtext.textedit.toPlainText())
         self.mdm.subject = self.subject_edit.text()
         to = self.to_edit.text()
 
@@ -403,6 +431,10 @@ class MWindow(QWidget, Ui_MWindow):
         for i in range(self.attachments.count()):
             files.append(str(self.attachments.item(i).data(3)))
 
+        for i in re.findall(r"<att>?\(([^\)]*)\)", self.mdm.mail_text):
+            files.append(str(i))
+
+        re.sub(r"<att>?\(([^\)]*)\)", "", self.mdm.mail_text)
 
         self.mdm.files = files
 
@@ -436,6 +468,58 @@ class MWindow(QWidget, Ui_MWindow):
     @pyqtSlot()
     def reenable_send(self):
         self.send_signal.connect(self.mdm.send)
+
+    def show_code_inline(self, text):
+        incs = re.findall(r"(<inc>?\[([^\]]*)\]\(([^\)]*)\))", text)
+
+        for inc in incs:
+            filename = None
+            for i in range(self.attachments.count()):
+                if str(self.attachments.item(i).data(2)) == inc[1]:
+                    filename = self.attachments.item(i).data(3)
+                    break
+
+            if not filename:
+                if os.path.isfile(inc[1]):
+                    filename = inc[1]
+                else:
+                    continue
+
+            lines = re.search(r'\blines="([ ]*[\d]+[ ]*-[ ]*[\d]+[ ]*)"', inc[2])
+
+            with open(filename, 'r') as file:
+                code = file.read()
+
+            if lines:
+                opts = inc[2].replace(lines[0], "")
+
+                lines = lines[1].split("-")
+
+                code = "\n".join(code.splitlines()[int(lines[0]) - 1:int(lines[1])])
+
+
+            else:
+                opts = inc[2]
+
+            if ("no_code" not in opts):
+                code = "~~~ " + opts + "\n" + code + "\n~~~"
+            text = text.replace(inc[0], code)
+
+
+        return text
+
+    def export_pdf(self):
+
+        filename, t = QFileDialog.getSaveFileName(None, "Export to PDF", ".pdf", "pdf (*.pdf)")
+
+        if filename == "":
+            return
+
+        html = self.html_view.page().mainFrame().toHtml()
+
+        pdfkit.from_string(html, filename)
+
+
 
 # here we go ...
 window = MWindow()

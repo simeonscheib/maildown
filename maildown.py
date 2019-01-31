@@ -9,6 +9,7 @@ from email.mime.application import MIMEApplication
 import markdown
 import styles
 from bs4 import BeautifulSoup
+import re
 
 import html2text
 
@@ -91,7 +92,7 @@ class MDMailer:
         default_html_start += "</head><body>"
         default_html_end = '</body></html>'
 
-        default_extensions = ['markdown.extensions.extra', 'markdown.extensions.toc', 'markdown.extensions.smarty', 'markdown.extensions.nl2br', 'markdown.extensions.urlize', 'markdown.extensions.Highlighting', 'markdown.extensions.Strikethrough', 'markdown.extensions.markdown_checklist', 'markdown.extensions.superscript', 'markdown.extensions.subscript', 'markdown.extensions.codehilite', 'markdown.extensions.def_list', 'markdown.extensions.admonition']
+        default_extensions = ['markdown.extensions.extra', 'markdown.extensions.toc', 'markdown.extensions.smarty', 'markdown.extensions.nl2br', 'markdown.extensions.Highlighting', 'markdown.extensions.Strikethrough', 'markdown.extensions.markdown_checklist', 'markdown.extensions.superscript', 'markdown.extensions.subscript', 'markdown.extensions.codehilite', 'markdown.extensions.def_list', 'markdown.extensions.admonition', 'markdown.extensions.sane_lists']
         safe_extensions = ['markdown.extensions.extra', 'markdown.extensions.nl2br']
 
         # convert ...
@@ -128,6 +129,8 @@ class MDMailer:
         images = []
         for img in soup.findAll('img'):
             img_path = img.get('src')
+            if not os.path.exists(img_path):
+                continue
             if "file:" in img_path:
                 images.append(img_path.replace("file:", ""))
 
@@ -140,7 +143,15 @@ class MDMailer:
 
         # make MIMEApplication for every attachment
         MIMEApplication_list = []
+
+        individual_att_list = []
         for f in files or []:
+
+            replace = re.search(r"§§(\w+)§§", f)
+
+            if replace:
+                individual_att_list.append((replace[1], f))
+                continue
             with open(f, "rb") as fil:
                 MIMEApplication_list.append(
                     MIMEApplication(fil.read(), Name=os.path.basename(f))
@@ -192,6 +203,13 @@ class MDMailer:
             alternative_mmp.attach(related_mmp)
             msg.attach(alternative_mmp)
 
+            for i, f in individual_att_list:
+                f2 = f.replace("§§" + str(i) + "§§", recipients[to_mail][i])
+                with open(f2, "rb") as file:
+                    mappl = MIMEApplication(file.read(), Name=os.path.basename(f2))
+                mappl['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(f2)
+                msg.attach(mappl)
+
             for part in MIMEApplication_list:
                 msg.attach(part)
 
@@ -242,6 +260,7 @@ class MDMailer:
             print("Unknown Type" + type(content))
 
         return plain_text2, html_message2
+
 
     def progress(self, done, recipients_number):
         print("Sent to " + done + " of " + recipients_number )
