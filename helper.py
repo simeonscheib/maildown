@@ -74,28 +74,28 @@ def load_pkl(filename):
         return pickle.load(f)
 
 
-class EmojiTableModel(QAbstractTableModel):
+class TableModel(QAbstractTableModel):
 
-    emojiL = None
+    table = None
 
-    def __init__(self, emojiL, parent=None):
+    def __init__(self, table, parent=None):
 
         super().__init__(parent=parent)
 
-        self.emojiL = emojiL
+        self.table = table
 
     def rowCount(self, parent):
-        return len(self.emojiL)
+        return len(self.table)
 
     def columnCount(self, parent):
-        return len(self.emojiL[0])
+        return len(self.table[0])
 
     def data(self, index, role):
         if not index.isValid():
             return QVariant()
         elif role != Qt.DisplayRole:
             return QVariant()
-        return "{0}".format(self.emojiL[index.row()][index.column()])
+        return "{0}".format(self.table[index.row()][index.column()])
 
 
 
@@ -128,7 +128,7 @@ class EmojiTable(QComboBox):
                 col += 1
 
 
-        self.model = EmojiTableModel(emoji, parent=self)
+        self.model = TableModel(emoji, parent=self)
         self.view = QTableView()
 
         self.view.setMinimumSize(300, 200)
@@ -164,4 +164,61 @@ class EmojiTable(QComboBox):
         self.emojiChanged.emit(self.currentText())
 
 
+class TextTable(QComboBox):
+
+    view = None
+    model = None
+
+    index_str_map =[
+        [
+        '<p style="font-size: 20px;"></p>',
+        '<inc>[](hl_lines="")',
+        '<att>()',
+        '<img src="" alt="" style="width:100px; height:200px;">'
+        ]
+    ]
+
+    table = [["<p>", "<inc>", "<att>", "<img>"]]
+
+    insert = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+
+
+        self.model = TableModel(self.table, parent=self)
+        self.view = QTableView()
+
+        self.view.setMinimumSize(300, 30)
+        self.view.setMaximumSize(300, 30)
+
+
+        self.view.setShowGrid(False)
+
+        self.view.verticalHeader().setVisible(False)
+        self.view.horizontalHeader().setVisible(False)
+
+        self.view.horizontalHeader().setSectionResizeMode(1)
+        self.view.verticalHeader().setSectionResizeMode(1)
+        #self.view.setMaximumWidth(200)
+        self.view.setStyleSheet("font-size: 15px;")
+
+        self.setStyleSheet('''* {font-size: 23px; border: 0px; padding: 0px; background-color: rgba(255,255,255,0);} 
+                                *::down-arrow {image: url(noimg); border-width: 0px;}
+                                *::drop-down {border: none; width: 0px;}
+                                }''')
+
+        self.setModel(self.model)
+        self.setView(self.view)
+
+        self.activated.connect(self.set_col)
+
+    def set_col(self, index):
+
+        index2 = self.view.currentIndex()
+
+        if not index2.isValid():
+            return
+
+        self.insert.emit(self.index_str_map[index][index2.column()])
 

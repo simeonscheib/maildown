@@ -8,7 +8,8 @@ from PyQt5.QtWidgets import (QApplication,
         QListWidgetItem,
         QShortcut,
         QMessageBox,
-        QTableWidgetItem
+        QTableWidgetItem,
+        QAction
         )
 
 from PyQt5.QtGui import QKeySequence
@@ -16,6 +17,7 @@ import os
 import helper
 import csv
 import re
+import pdfkit
 
 # App
 app = QApplication([])
@@ -283,6 +285,8 @@ class MWindow(QWidget, Ui_MWindow):
 
     send_signal = pyqtSignal()
 
+    export_pdf_act = None
+
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -299,7 +303,7 @@ class MWindow(QWidget, Ui_MWindow):
 
 
         # Connect Stuff here ...
-        self.mdtext.textChanged.connect(self.compile)
+        self.mdtext.textedit.textChanged.connect(self.compile)
         self.send_btn.pressed.connect(self.send)
         self.add_att_btn.pressed.connect(self.add_att)
         self.send_signal.connect(self.mdm.send)
@@ -311,6 +315,10 @@ class MWindow(QWidget, Ui_MWindow):
 
         del_att_short = QShortcut(QKeySequence(Qt.Key_Delete), self.attachments)
         del_att_short.activated.connect(self.del_att)
+
+        self.export_pdf_act = QShortcut(QKeySequence("Ctrl+E"), self)
+
+        self.export_pdf_act.activated.connect(self.export_pdf)
 
         self.stylesheet = """
         .QPushButton {
@@ -378,11 +386,11 @@ class MWindow(QWidget, Ui_MWindow):
     # Show html from plain text
     def compile(self):
 
-        cursor = self.mdtext.textCursor()
+        cursor = self.mdtext.textedit.textCursor()
         cursor.movePosition(9, 1)
 
 
-        md_text_plain = self.mdtext.toPlainText()
+        md_text_plain = self.mdtext.textedit.toPlainText()
 
         md_text_plain = self.show_code_inline(md_text_plain)
 
@@ -405,7 +413,7 @@ class MWindow(QWidget, Ui_MWindow):
 
     # Send Mail
     def send(self):
-        self.mdm.mail_text = self.show_code_inline(self.mdtext.toPlainText())
+        self.mdm.mail_text = self.show_code_inline(self.mdtext.textedit.toPlainText())
         self.mdm.subject = self.subject_edit.text()
         to = self.to_edit.text()
 
@@ -465,30 +473,51 @@ class MWindow(QWidget, Ui_MWindow):
         incs = re.findall(r"(<inc>?\[([^\]]*)\]\(([^\)]*)\))", text)
 
         for inc in incs:
+            filename = None
             for i in range(self.attachments.count()):
                 if str(self.attachments.item(i).data(2)) == inc[1]:
+                    filename = self.attachments.item(i).data(3)
+                    break
 
-                    lines = re.search(r'\blines="([ ]*[\d]+[ ]*-[ ]*[\d]+[ ]*)"', inc[2])
+            if not filename:
+                if os.path.isfile(inc[1]):
+                    filename = inc[1]
+                else:
+                    continue
 
-                    with open(self.attachments.item(i).data(3), 'r') as file:
-                        code = file.read()
+            lines = re.search(r'\blines="([ ]*[\d]+[ ]*-[ ]*[\d]+[ ]*)"', inc[2])
 
-                    if lines:
-                        opts = inc[2].replace(lines[0], "")
+            with open(filename, 'r') as file:
+                code = file.read()
 
-                        lines = lines[1].split("-")
+            if lines:
+                opts = inc[2].replace(lines[0], "")
 
-                        code = "\n".join(code.splitlines()[int(lines[0]) - 1:int(lines[1])])
+                lines = lines[1].split("-")
+
+                code = "\n".join(code.splitlines()[int(lines[0]) - 1:int(lines[1])])
 
 
-                    else:
-                        opts = inc[2]
+            else:
+                opts = inc[2]
 
-                    code = "~~~ " + opts + "\n" + code + "\n~~~"
-                    text = text.replace(inc[0], code)
+            if ("no_code" not in opts):
+                code = "~~~ " + opts + "\n" + code + "\n~~~"
+            text = text.replace(inc[0], code)
 
 
         return text
+
+    def export_pdf(self):
+
+        filename, t = QFileDialog.getSaveFileName(None, "Export to PDF", ".pdf", "pdf (*.pdf)")
+
+        if filename == "":
+            return
+
+        html = self.html_view.page().mainFrame().toHtml()
+
+        pdfkit.from_string(html, filename)
 
 
 
