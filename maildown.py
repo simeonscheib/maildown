@@ -13,6 +13,15 @@ import re
 
 import html2text
 
+from markdown.extensions.Highlighting import Highlighting
+from markdown.extensions.Strikethrough import Strikethrough
+from markdown.extensions.markdown_checklist import ChecklistExtension
+from markdown.extensions.superscript import SuperscriptExtension
+from markdown.extensions.subscript import SubscriptExtension
+
+
+
+
 class MDMailer:
 
     # store server data
@@ -92,12 +101,13 @@ class MDMailer:
         default_html_start += "</head><body>"
         default_html_end = '</body></html>'
 
-        default_extensions = ['markdown.extensions.extra', 'markdown.extensions.toc', 'markdown.extensions.smarty', 'markdown.extensions.nl2br', 'markdown.extensions.Highlighting', 'markdown.extensions.Strikethrough', 'markdown.extensions.markdown_checklist', 'markdown.extensions.superscript', 'markdown.extensions.subscript', 'markdown.extensions.codehilite', 'markdown.extensions.def_list', 'markdown.extensions.admonition', 'markdown.extensions.sane_lists']
+        default_extensions = ['markdown.extensions.extra', 'markdown.extensions.toc', 'markdown.extensions.smarty', 'markdown.extensions.nl2br', Highlighting(), Strikethrough(), ChecklistExtension(), SubscriptExtension(), SuperscriptExtension(), 'markdown.extensions.codehilite', 'markdown.extensions.def_list', 'markdown.extensions.admonition', 'markdown.extensions.sane_lists']
         safe_extensions = ['markdown.extensions.extra', 'markdown.extensions.nl2br']
 
         # convert ...
         try:
             html_body = markdown.markdown(text_md, extensions=default_extensions)
+
         except:
             try:
                 html_body = markdown.markdown(text_md, extensions=safe_extensions)
